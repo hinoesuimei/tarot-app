@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>タロット2枚引き</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: #fdf3e7;
+      background-image:
+        radial-gradient(ellipse at 30% 30%, rgba(255, 200, 120, 0.45) 0%, transparent 60%),
+        radial-gradient(ellipse at 75% 70%, rgba(255, 160, 80, 0.25) 0%, transparent 55%);
+      font-family: 'Yu Mincho', 'YuMincho', 'Hiragino Mincho ProN', serif;
+      color: #5a3a1a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      gap: 1.5rem;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      letter-spacing: 0.4em;
+      color: #c0621a;
+      text-shadow: 0 0 24px rgba(220, 140, 60, 0.35);
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      letter-spacing: 0.25em;
+      color: #b08060;
+      margin-top: -1rem;
+    }
+
+    /* ── カードエリア ── */
+    .cards-area {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+    }
+
+    .card-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .card-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      color: #b08060;
+    }
+
+    .card-container {
+      width: 140px;
+      height: 220px;
+      perspective: 900px;
+    }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.75s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card-inner.flipped { transform: rotateY(180deg); }
+
+    .card-back,
+    .card-front {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    /* 裏面 */
+    .card-back {
+      background: linear-gradient(140deg, #f5dfc0 0%, #f0c898 50%, #f5dfc0 100%);
+      border: 1px solid rgba(192, 98, 26, 0.3);
+    }
+    .card-back::before {
+      content: '✦';
+      font-size: 3.2rem;
+      color: rgba(192, 98, 26, 0.25);
+    }
+    .card-back::after {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border: 1px solid rgba(192, 98, 26, 0.15);
+      border-radius: 7px;
+    }
+
+    /* 表面（共通） */
+    .card-front { transform: rotateY(180deg); }
+
+    /* ── 大アルカナ ── */
+    .arcana-front {
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid rgba(180, 150, 210, 0.35);
+      background-color: #0d0d1a;
+    }
+
+    .arcana-front.reversed {
+      border-color: rgba(210, 120, 120, 0.45);
+    }
+
+    .arcana-img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+
+    .arcana-front.reversed .arcana-img {
+      transform: rotate(180deg);
+    }
+
+    /* カード内コンテンツ（画像下部オーバーレイ） */
+    .arcana-content {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 0.4rem 0.4rem 0.5rem;
+      background: linear-gradient(transparent, rgba(0,0,0,0.82));
+      border-radius: 0 0 12px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.1rem;
+    }
+
+    .arcana-front.reversed .arcana-content {
+      bottom: auto;
+      top: 0;
+      border-radius: 12px 12px 0 0;
+      background: linear-gradient(rgba(0,0,0,0.82), transparent);
+      transform: rotate(180deg);
+    }
+
+    .arcana-numeral {
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .arcana-name {
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      color: #fff;
+      font-weight: bold;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    }
+
+    .position-badge {
+      font-size: 0.58rem;
+      letter-spacing: 0.12em;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      background: rgba(180, 150, 210, 0.25);
+      color: rgba(255,255,255,0.75);
+      border: 1px solid rgba(180, 150, 210, 0.3);
+    }
+
+    .arcana-front.reversed .position-badge {
+      background: rgba(210, 120, 120, 0.25);
+      border-color: rgba(210, 120, 120, 0.4);
+    }
+
+    /* ── 五行カード 裏面（太陽マーク） ── */
+    .element-card-back {
+      background: #fdf0dc url('images/キャラ1.png') center/80% no-repeat;
+      border: 3px solid #c0621a;
+      box-shadow: 0 0 0 1px rgba(192, 98, 26, 0.2), inset 0 0 0 2px rgba(255, 220, 160, 0.6);
+    }
+    .element-card-back::before { content: none; }
+    .element-card-back::after  { content: none; }
+
+    /* ── 五行カード 表面（イラスト全面） ── */
+    .element-front {
+      padding: 0;
+      overflow: hidden;
+      border: 3px solid #c0621a;
+      box-shadow: 0 0 0 1px rgba(192, 98, 26, 0.2), inset 0 0 0 2px rgba(255, 220, 160, 0.6);
+      background-size: 85%;
+      background-position: center 40%;
+      background-repeat: no-repeat;
+      background-color: #fdf0dc;
+    }
+
+    /* テキストオーバーレイ（下部） */
+    .element-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0.5rem 0.4rem 0.6rem;
+      background: linear-gradient(transparent, rgba(180, 100, 20, 0.55));
+      border-radius: 0 0 12px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.1rem;
+    }
+
+    .element-kanji {
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(120, 60, 0, 0.7);
+      line-height: 1;
+    }
+
+    .element-subtitle {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.9);
+      text-shadow: 0 1px 3px rgba(120, 60, 0, 0.7);
+    }
+
+    /* ── 区切り ── */
+    .cross {
+      font-size: 1.4rem;
+      color: #c8956a;
+      align-self: center;
+      margin-top: 2rem;
+    }
+
+    /* ── メッセージ ── */
+    .message-area {
+      max-width: 360px;
+      width: 100%;
+      padding: 1.1rem 1.8rem;
+      background: rgba(255, 200, 120, 0.2);
+      border: 1px solid rgba(200, 130, 60, 0.3);
+      border-radius: 8px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+      min-height: 3.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .message-area.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .message-text {
+      font-size: 1rem;
+      letter-spacing: 0.18em;
+      line-height: 1.9;
+      color: #5a3a1a;
+    }
+
+    /* ── ボタン ── */
+    .draw-button {
+      padding: 0.85rem 3rem;
+      background: transparent;
+      border: 1px solid rgba(192, 98, 26, 0.5);
+      color: #c0621a;
+      font-family: inherit;
+      font-size: 0.95rem;
+      letter-spacing: 0.3em;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.25s, box-shadow 0.25s, border-color 0.25s;
+    }
+
+    .draw-button:hover:not(:disabled) {
+      background: rgba(220, 140, 60, 0.12);
+      border-color: #c0621a;
+      box-shadow: 0 0 18px rgba(220, 140, 60, 0.25);
+    }
+
+    .draw-button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    @media (max-width: 380px) {
+      .card-container { width: 120px; height: 190px; }
+      .element-kanji { font-size: 3.8rem; }
+      .arcana-symbol { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>✦ タロット占い ✦</h1>
+  <p class="subtitle">大アルカナ × 五行カード</p>
+
+  <div class="cards-area">
+    <div class="card-slot">
+      <div class="card-label">大アルカナ</div>
+      <div class="card-container">
+        <div class="card-inner" id="arcana-card">
+          <div class="card-back"></div>
+          <div class="card-front arcana-front" id="arcana-front">
+            <img class="arcana-img" id="arcana-img" src="" alt="">
+            <div class="arcana-content">
+              <div class="arcana-numeral" id="arcana-numeral"></div>
+              <div class="arcana-name" id="arcana-name"></div>
+              <div class="position-badge" id="position-badge"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cross">×</div>
+
+    <div class="card-slot">
+      <div class="card-label">五行カード</div>
+      <div class="card-container">
+        <div class="card-inner" id="element-card">
+          <div class="card-back element-card-back"></div>
+          <div class="card-front element-front" id="element-front">
+            <div class="element-overlay">
+              <div class="element-kanji" id="element-kanji"></div>
+              <div class="element-subtitle" id="element-subtitle"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="message-area" id="message-area">
+    <p class="message-text" id="message-text"></p>
+  </div>
+
+  <button class="draw-button" id="draw-button" onclick="drawCards()">カードを引く</button>
+
+<script>
+const ARCANA = [
+  { num: '0',     name: '愚者',      en: 'The Fool',           sym: '○'  },
+  { num: 'Ⅰ',    name: '魔術師',    en: 'The Magician',       sym: '✦'  },
+  { num: 'Ⅱ',    name: '女教皇',    en: 'The High Priestess', sym: '☽'  },
+  { num: 'Ⅲ',    name: '女帝',      en: 'The Empress',        sym: '✿'  },
+  { num: 'Ⅳ',    name: '皇帝',      en: 'The Emperor',        sym: '◆'  },
+  { num: 'Ⅴ',    name: '教皇',      en: 'The Hierophant',     sym: '✞'  },
+  { num: 'Ⅵ',    name: '恋人',      en: 'The Lovers',         sym: '♡'  },
+  { num: 'Ⅶ',    name: '戦車',      en: 'The Chariot',        sym: '▶'  },
+  { num: 'Ⅷ',    name: '力',        en: 'Strength',           sym: '∞'  },
+  { num: 'Ⅸ',    name: '隠者',      en: 'The Hermit',         sym: '✧'  },
+  { num: 'Ⅹ',    name: '運命の輪',  en: 'Wheel of Fortune',   sym: '⊙'  },
+  { num: 'Ⅺ',    name: '正義',      en: 'Justice',            sym: '⚖'  },
+  { num: 'Ⅻ',    name: '吊られた男', en: 'The Hanged Man',    sym: '▽'  },
+  { num: 'XIII',  name: '死神',      en: 'Death',              sym: '✝'  },
+  { num: 'XIV',   name: '節制',      en: 'Temperance',         sym: '☯'  },
+  { num: 'XV',    name: '悪魔',      en: 'The Devil',          sym: '▲'  },
+  { num: 'XVI',   name: '塔',        en: 'The Tower',          sym: '⚡' },
+  { num: 'XVII',  name: '星',        en: 'The Star',           sym: '★'  },
+  { num: 'XVIII', name: '月',        en: 'The Moon',           sym: '☾'  },
+  { num: 'XIX',   name: '太陽',      en: 'The Sun',            sym: '☀'  },
+  { num: 'XX',    name: '審判',      en: 'Judgement',          sym: '♬'  },
+  { num: 'XXI',   name: '世界',      en: 'The World',          sym: '⊕'  },
+];
+
+const ELEMENTS = [
+  { key: '木', sub: '伸びる力' },
+  { key: '火', sub: '燃える力' },
+  { key: '土', sub: '整える力' },
+  { key: '金', sub: '磨く力'   },
+  { key: '水', sub: '深める力' },
+];
+
+// MESSAGES[arcanaIndex][0=正位置 / 1=逆位置][elementIndex 0=木 1=火 2=土 3=金 4=水]
+const MESSAGES = [
+  /* 0  愚者 */
+  [
+    ['今こそ新しい一歩を踏み出すとき',         '情熱のまま、新しい世界へ飛び込もう',   '身軽さが今のあなたの最大の強み',       'まだ未完成でも、動き始めることが大切', '流れに身を任せると新たな始まりが来る'],
+    ['勢いだけで進むと転んでしまう',           '感情任せは後で後悔することになる',     '準備不足のまま進むのは危険なとき',     '努力なしに結果だけを求めていないか',   '流されているうちに、道を見失ってしまう'],
+  ],
+  /* 1  魔術師 */
+  [
+    ['あなたの力が今まさに花開くとき',         'やる気と才能が最高に輝いている',       '持っている力を現実に変えられるとき',   '技術を磨けば必ず道が開ける',           '直感を信じて動くと、うまくいく'],
+    ['才能があるのに活かせていない状態',       '空回りしている、まず落ち着いて',       '見栄えだけで中身が伴っていない',       '道具は揃っているのに踏み出せていない', '直感を信じきれず、チャンスを逃している'],
+  ],
+  /* 2  女教皇 */
+  [
+    ['静かに待てば、答えが自然に育つ',         '内なる直感が真実を照らしてくれる',     '今は静かに、答えが育つのを待つとき',   'じっくり観察するほど本質が見えてくる', '深く感じるほど、真実に近づいていける'],
+    ['大切なことを心の中に隠しすぎている',     '感情を抑えすぎて苦しくなっている',     '表面だけを取り繕っていないか確認を',   '見た目や外側ばかりを気にしている',     '深みを避けて、表面だけを泳いでいる'],
+  ],
+  /* 3  女帝 */
+  [
+    ['豊かさと成長の季節が来ている',           '愛情と情熱が周りの人を育てている',     '大地のような安心感があなたを守っている', 'あなたの魅力が最大に輝いているとき',   '愛情が溢れ、周りの人が潤っている'],
+    ['世話を焼きすぎて相手が育てなくなっている', '溺愛しすぎて相手を傷つけている',     '依存しすぎて自立できなくなっている',   '外見や表面ばかりに気を取られている',   '与えすぎて自分自身が枯れてしまっている'],
+  ],
+  /* 4  皇帝 */
+  [
+    ['しっかりした土台が成功を支えている',     '強い意志が困難な道を切り開いてくれる', '揺るぎない姿勢が周りからの信頼を生む', '努力と訓練が頂点へと導いてくれる',     '全体を見渡す力が状況をうまく制する'],
+    ['頑固すぎて変化についていけなくなっている', '力でねじ伏せようとして反発を招いている', '管理しすぎて周りが息苦しくなっている', '強さだけで柔軟さが失われてしまっている', 'コントロールしようとしすぎて溺れている'],
+  ],
+  /* 5  教皇 */
+  [
+    ['伝統と経験が今のあなたの力になる',       '信念が迷える人を正しい方向へ導いている', '積み重ねた知恵が大きな礎になっている', '学びを深めるほど進む道が明確になる',   '真の教えは静かに、心の深くに染みていく'],
+    ['古いやり方に縛られて身動きが取れない',   '正しさを押しつけて反発を招いている',   'ルールが硬すぎて成長が妨げられている', '形式だけで本質が空洞になってしまっている', '固定観念が新しい流れを止めてしまっている'],
+  ],
+  /* 6  恋人 */
+  [
+    ['心のつながりが新しい可能性を生んでいる', '愛の気持ちが激しく燃え上がっている',   '深い絆が揺るぎない土台になっている',   'お互いを高め合うことで二人が輝く',     '心が溶け合い、深く繋がっていける'],
+    ['迷いが大切な関係を揺るがしている',       '感情的な判断が関係を壊しかねない',     'すれ違いが根本から関係に広がっている', '傷つけ合うことで輝きが失われていく',   '心が交わらず、関係が離れていってしまう'],
+  ],
+  /* 7  戦車 */
+  [
+    ['前向きな力が障害を乗り越えさせてくれる', '勝利への意志がどんどん燃え盛っている', '強い意志が一歩一歩を確かなものにする', '集中力が高まって、成功が近づいている', '状況をよく読んで最善の道を進んでいける'],
+    ['暴走すると大切なものを傷つけてしまう',   '感情的な突進が全てを壊してしまう',     '乱暴に進んだ後に荒廃だけが残る',       '焦りが判断を誤らせてしまっている',     '流れに逆らい続けて消耗してしまっている'],
+  ],
+  /* 8  力 */
+  [
+    ['粘り強く続ければ必ず報われるとき',       '内側の勇気が恐れを乗り越えさせてくれる', 'どっしりとした安定感が安心を生んでいる', '精神的な強さが困難を乗り越えさせてくれる', '優しさと柔軟さの中に本当の強さがある'],
+    ['心が折れそうで試練に耐えられなくなっている', '恐れが勇気の炎を消してしまっている', '自信を失い、足元がふらついている',     '自己不信が深まって磨けなくなっている', '意志が弱まって流されてしまっている'],
+  ],
+  /* 9  隠者 */
+  [
+    ['一人の時間が本当の知恵を育ててくれる',   '自分と向き合うことで真実が見えてくる', '静かな場所の中に大切な答えが眠っている', '孤独に磨き続けた知恵が光り始める',     '深く内省するほど本質に近づいていける'],
+    ['孤立しすぎて心が枯れてしまっている',     '内省が自己批判になってしまっている',   '引きこもりすぎて動けなくなっている',   'いくら考えても出口が見えない状態',     '深みにはまって浮かび上がれなくなっている'],
+  ],
+  /* 10 運命の輪 */
+  [
+    ['変化の波が新しい成長をもたらしてくれる', '転機が来た、今が動き出すとき',         '季節が変わるように、新たな流れが来た', '好機が来ている、逃さないで',           '流れが変わった、この波に乗ろう'],
+    ['急な変化が根本を揺るがしている',         '状況が悪化している、立て直しが必要',   '足場が崩れている、踏みとどまって',     'せっかくの機会を掴みそこねてしまっている', '逆流に飲み込まれそうになっている'],
+  ],
+  /* 11 正義 */
+  [
+    ['誠実さが正しい結果を育ててくれる',       '真実が明らかになるときが来た',         '公平な基準が安定と信頼をもたらす',     '冷静な判断が正しい道を示してくれる',   '正直に流れる水が真実を連れてくる'],
+    ['不公平な扱いを受けているかもしれない',   '偏った判断が誤りを生んでしまっている', 'バランスが崩れて不安定になっている',   '判断が曇っていて正解が見えなくなっている', '真実が隠されて正しく判断できなくなっている'],
+  ],
+  /* 12 吊られた男 */
+  [
+    ['違う角度で見ると新しい答えが見つかる',   'じっとしている中に大切な気づきが生まれる', '焦らず待てば、大地が答えをくれる',     '手放すことで本当に大切なものが残る',   '逆らわずに受け入れると深みが生まれる'],
+    ['ずっと停滞していて前に進めなくなっている', '無駄な努力を続けてエネルギーが尽きる', '動けないままどんどん沈んでいく',       '手放したり諦めたりして後悔している',   '状況を受け入れられずに苦しんでいる'],
+  ],
+  /* 13 死神 */
+  [
+    ['古いものが終わり、新しい芽が育ち始める', '一度リセットされることで再生が始まる', '終わりが豊かな次の始まりの土台になる', '不要なものが取り除かれ、本質が現れる', '濁りが流れ去り、清らかな流れが来る'],
+    ['変化を恐れて古いものにしがみついている', '終わりを認めないことで前に進めない',   '古いものを手放せず、新しい芽が育たない', '不純物を取り除けずに輝けないでいる',   '流れが止まって、ずっと淀んでいる'],
+  ],
+  /* 14 節制 */
+  [
+    ['じっくり丁寧に育てたものが一番強くなる', 'バランスよく燃える炎は長く続いていく', '中庸を保つことが安定をもたらしてくれる', '丁寧に磨くほど輝きがどんどん増していく', '穏やかな流れが深いところまで届いていく'],
+    ['急ぎすぎて大切なものを見落としている',   '焦りがすべてを台無しにしかねない',     '偏りすぎてバランスが崩れてしまっている', '雑に扱ったせいで傷がついてしまった',   '急ぎすぎて本質が削れてしまっている'],
+  ],
+  /* 15 悪魔 */
+  [
+    ['縛りから解放されれば自由に伸びていける', '欲望に飲み込まれないよう今すぐ注意を', '執着や依存から早めに抜け出すべきとき', '強い意志があれば誘惑に打ち勝てる',     '深みにはまる前に気づいて引き返そう'],
+    ['束縛に気づいて、自由を取り戻せるとき',   '欲が燃え尽きて、心が浄化されていく',   '泥沼から抜け出して新しい道を歩み始める', '目が覚めて、本物と偽物を見分けられる', '濁りを抜けて清らかな流れに戻れる'],
+  ],
+  /* 16 塔 */
+  [
+    ['古いものが一掃されて新しい芽が育つ',     '突然の変化が長年の問題を一気に解消する', '崩れることで新しい土台を作るチャンス', '壊れた中から本当に強いものが現れる',   '濁流が積み重なった問題を洗い流してくれる'],
+    ['崩壊の前に弱い部分を見直すべきとき',     '小さなサインが大きな問題を警告している', '今のうちに土台の不具合を直しておこう', '壊れる前に補強できる今がチャンス',     '小さな問題を早めに解消すると大事にならない'],
+  ],
+  /* 17 星 */
+  [
+    ['希望の光の中で可能性が着実に育っている', '夢を持ち続けることが前に進む力になる', '光に恵まれて実りの時が近づいている',   '磨いてきた努力が輝く未来につながっていく', '穏やかな癒しと希望がたっぷり満ちている'],
+    ['希望を失いかけて気力が低下している',     '夢への情熱が薄れて消えかかっている',   '恵まれない状況がしばらく続いている',   '努力の方向性を見失ってしまっている',   '心が渇いていて希望が見えない状態'],
+  ],
+  /* 18 月 */
+  [
+    ['見えない部分で着実に根が深まっている',   '感情の波が高まり、直感が鋭くなっている', '暗くても大地はちゃんと道を知っている', '不安の中に磨くべき大切なものが隠れている', '無意識の声が重要なことを伝えようとしている'],
+    ['不安や幻想から目覚め、地に足がつき始める', '恐れの霧が晴れて本来の力が戻ってくる', '混乱が落ち着いて進むべき道が見えてくる', '幻を見抜いて、本当の問題に気づける',   '引き潮のように不安がすーっと引いていく'],
+  ],
+  /* 19 太陽 */
+  [
+    ['明るい光の中で元気いっぱいに成長できる', '喜びと情熱が今まさに最高潮に達している', '暖かさに包まれて豊かな実りがやってくる', 'あなたの努力と輝きが最高の形で報われる', '明るい流れに乗って幸運がやってくる'],
+    ['頑張りすぎて逆に心が疲れてしまっている', '自信過剰が周りとの摩擦を生んでいる',   '張りきりすぎて体や心に無理がかかっている', '目立ちすぎて本質が見えなくなっている', 'エネルギーが過剰になって流れを乱している'],
+  ],
+  /* 20 審判 */
+  [
+    ['これまでの努力が今、正当に評価されるとき', '使命に目覚める大切な転換期が来ている', '積み重ねてきた歩みが正しく評価される', '磨いてきたことへの報いがちゃんと来る', '長い年月が真実として今、現れてくる'],
+    ['過去のことを手放せずに前に進めない',     '変化のチャンスを恐れて見逃してしまっている', '努力を認めてもらえずに焦っている',     'せっかくの成果が正当に評価されていない', '後悔が今の判断を曇らせてしまっている'],
+  ],
+  /* 21 世界 */
+  [
+    ['すべてが繋がり、完成のときを迎えた',     '燃え尽きるほど努力した先に完成がある', '大地全体が祝福している完成の瞬間',     '磨き続けた結果、完璧な輝きが宿った',   'すべての流れが一つになり、循環が完成する'],
+    ['もう少しのところで完成が遠のいている',   '力が尽きる前に未完のまま止まっている', 'もう少しで完成なのにひびが入っている', '仕上げを怠って完璧を遠ざけてしまっている', '循環が途切れて流れが孤立してしまっている'],
+  ],
+];
+
+let drawing = false;
+
+function drawCards() {
+  if (drawing) return;
+  drawing = true;
+
+  const btn = document.getElementById('draw-button');
+  btn.disabled = true;
+
+  const arcanaCard    = document.getElementById('arcana-card');
+  const arcanaFront   = document.getElementById('arcana-front');
+  const elementCard   = document.getElementById('element-card');
+  const messageArea   = document.getElementById('message-area');
+
+  // リセット
+  arcanaCard.classList.remove('flipped');
+  elementCard.classList.remove('flipped');
+  arcanaFront.classList.remove('reversed');
+  messageArea.classList.remove('visible');
+
+  // 抽選
+  const ai       = Math.floor(Math.random() * 22);
+  const ei       = Math.floor(Math.random() * 5);
+  const reversed = Math.random() < 0.5;
+  const ri       = reversed ? 1 : 0;
+
+  const a = ARCANA[ai];
+  const e = ELEMENTS[ei];
+
+  // 大アルカナ面
+  document.getElementById('arcana-img').src             = `images/arcana/${ai}.jpg`;
+  document.getElementById('arcana-numeral').textContent = a.num;
+  document.getElementById('arcana-name').textContent    = a.name;
+  document.getElementById('position-badge').textContent = reversed ? '逆位置' : '正位置';
+
+  // 五行カード面
+  const ef = document.getElementById('element-front');
+  ef.className = 'card-front element-front';
+  ef.style.backgroundImage = `url('images/五行イラスト/${e.key}.png')`;
+  document.getElementById('element-kanji').textContent    = e.key;
+  document.getElementById('element-subtitle').textContent = e.sub;
+
+  // メッセージ
+  document.getElementById('message-text').textContent = MESSAGES[ai][ri][ei];
+
+  // アニメーション
+  setTimeout(() => {
+    arcanaCard.classList.add('flipped');
+    if (reversed) arcanaFront.classList.add('reversed');
+  }, 300);
+
+  setTimeout(() => elementCard.classList.add('flipped'), 850);
+
+  setTimeout(() => {
+    messageArea.classList.add('visible');
+    btn.disabled = false;
+    btn.textContent = 'もう一度引く';
+    drawing = false;
+  }, 1700);
+}
+</script>
+</body>
+</html>

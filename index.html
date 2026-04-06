@@ -273,6 +273,64 @@
       color: #5a3a1a;
     }
 
+    /* ── ひのえの一言アドバイス ── */
+    .advice-area {
+      max-width: 360px;
+      width: 100%;
+      padding: 1rem 1.8rem 1rem 1.4rem;
+      background: rgba(192, 98, 26, 0.07);
+      border: 1px solid rgba(192, 98, 26, 0.2);
+      border-radius: 8px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      position: relative;
+      overflow: visible;
+    }
+    .advice-area.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .advice-label {
+      font-size: 0.7rem;
+      font-weight: bold;
+      letter-spacing: 0.35em;
+      color: #a04a10;
+    }
+    .advice-text {
+      font-size: 0.9rem;
+      letter-spacing: 0.12em;
+      line-height: 1.9;
+      color: #5a3a1a;
+    }
+    .advice-sun {
+      position: absolute;
+      bottom: -18px;
+      right: 8px;
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      animation: sun-float 2.2s ease-in-out infinite;
+    }
+    @keyframes sun-float {
+      0%,100% { transform: translateY(0)    rotate(-5deg); }
+      50%      { transform: translateY(-9px) rotate( 5deg); }
+    }
+    @media (max-width: 359px) {
+      .advice-area { padding: 0.8rem 1rem 0.8rem 0.8rem; }
+      .advice-text { font-size: 0.85rem; }
+      .advice-sun  { width: 38px; height: 38px; bottom: -14px; right: 6px; }
+    }
+    @media (min-width: 768px) {
+      .advice-area { max-width: 480px; padding: 1.2rem 2.2rem 1.2rem 1.8rem; }
+      .advice-text { font-size: 1.05rem; }
+      .advice-sun  { width: 54px; height: 54px; bottom: -22px; right: 12px; }
+    }
+
     /* ── ボタン ── */
     .draw-button {
       padding: 0.85rem 3rem;
@@ -348,6 +406,89 @@
       .card-container { width: 180px; height: 280px; }
       .message-area { max-width: 560px; }
     }
+
+    /* ── シャッフルアニメーション ── */
+    .shuffle-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      background: rgba(253, 243, 231, 0.93);
+      gap: 1.5rem;
+    }
+    .shuffle-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .shuffle-ring-wrap {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      overflow: visible;
+    }
+    .shuffle-ring {
+      position: absolute;
+      inset: 0;
+      overflow: visible;
+    }
+    /* 円を描くように移動 ＋ 傾きで「手でかき混ぜる」感を演出 */
+    @keyframes mix-circle {
+      0%   { transform: translate(  0px, -45px) rotate(  0deg); }
+      25%  { transform: translate( 45px,   0px) rotate( 20deg); }
+      50%  { transform: translate(  0px,  45px) rotate(  0deg); }
+      75%  { transform: translate(-45px,   0px) rotate(-20deg); }
+      100% { transform: translate(  0px, -45px) rotate(  0deg); }
+    }
+    @keyframes card-drift {
+      0%   { transform: translate(0px, 0px) rotate(var(--r, 0deg)); }
+      100% { transform: translate(var(--dx, 0px), var(--dy, 0px))
+                        rotate(calc(var(--r, 0deg) + var(--spin, 12deg))); }
+    }
+    .shuffle-ring.mixing {
+      animation: mix-circle 1s linear infinite;
+    }
+    .shuffle-mini {
+      position: absolute;
+      width: 44px;
+      height: 68px;
+      border-radius: 7px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+      animation: card-drift 0.85s ease-in-out infinite alternate;
+    }
+    .shuffle-mini.arcana-mini {
+      background: linear-gradient(140deg, #f5dfc0 0%, #f0c898 50%, #f5dfc0 100%);
+      border: 1px solid rgba(192, 98, 26, 0.3);
+    }
+    .shuffle-mini.arcana-mini::before {
+      content: '✦';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.2rem;
+      color: rgba(192, 98, 26, 0.28);
+    }
+    .shuffle-mini.element-mini {
+      background: #fdf0dc url('images/キャラ1.png') center/75% no-repeat;
+      border: 2px solid #c0621a;
+      box-shadow: 0 0 0 1px rgba(192, 98, 26, 0.15), 0 2px 10px rgba(0,0,0,0.13);
+    }
+    .shuffle-label {
+      font-size: 0.82rem;
+      letter-spacing: 0.45em;
+      color: #b08060;
+      animation: shuffle-pulse 0.9s ease-in-out infinite alternate;
+    }
+    @keyframes shuffle-pulse {
+      from { opacity: 0.35; }
+      to   { opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -391,8 +532,22 @@
     </div>
   </div>
 
+  <!-- シャッフルオーバーレイ -->
+  <div class="shuffle-overlay" id="shuffle-overlay">
+    <div class="shuffle-ring-wrap">
+      <div class="shuffle-ring" id="shuffle-ring"></div>
+    </div>
+    <p class="shuffle-label">シャッフル中…</p>
+  </div>
+
   <div class="message-area" id="message-area">
     <p class="message-text" id="message-text"></p>
+  </div>
+
+  <div class="advice-area" id="advice-area">
+    <p class="advice-label">✦ ひのえの一言アドバイス ✦</p>
+    <p class="advice-text" id="advice-text"></p>
+    <img class="advice-sun" src="images/キャラ1.png" alt="ひのえ">
   </div>
 
   <button class="draw-button" id="draw-button" onclick="drawCards()">カードを引く</button>
@@ -429,6 +584,35 @@ const ELEMENTS = [
   { key: '土', sub: '整える力' },
   { key: '金', sub: '磨く力'   },
   { key: '水', sub: '深める力' },
+];
+
+// ADVICE[elementIndex 0=木 1=火 2=土 3=金 4=水][0=正位置 / 1=逆位置]
+const ADVICE = [
+  /* 木 */
+  [
+    '伸びようとしている気持ち、大切にしてね。小さな一歩でも動き続けることで、自然と大きくなっていくから。今がまさに、その芽吹きのときだよ。',
+    '焦る気持ち、わかるよ。でも根がしっかり張れていないと、伸びても折れてしまうの。まず立ち止まって、自分の土台を確かめてみて。',
+  ],
+  /* 火 */
+  [
+    '今の情熱、すごくいい感じ！その炎を大切にしながら、燃えすぎて消えないように、たまに自分を休ませてあげてね。',
+    '気持ちが空回りしてるかな？まず深呼吸して。火は大切にくべてこそ長持ちするもの。小さな「好き」から、もう一度始めてみて。',
+  ],
+  /* 土 */
+  [
+    '今のあなたには、しっかりした土台がある。誰かのために動いたり、コツコツ積み上げることが、あなた自身の豊かさにもつながっていくよ。',
+    '少し偏りが出てるかも。何かひとつだけ手放してみて。土の力は受け取って流すことで生きてくるから、ため込みすぎないでね。',
+  ],
+  /* 金 */
+  [
+    '本質を見る目が冴えてる時期だよ。不要なものをひとつ手放すと、本当に大切なものがくっきり見えてくる。あなたの判断、信じてみてね。',
+    '自分を厳しく見すぎてないかな？完璧じゃなくていいの。「今日はここまでよくやった」って、まず自分を認めてあげることから始めてみて。',
+  ],
+  /* 水 */
+  [
+    '今の直感、かなり冴えてるよ。「なんとなく」って感じてること、大切にしてみて。焦らず流れに乗るように動くと、思ってもみない扉が開くかも。',
+    '考えすぎて動けなくなってない？水は流れてこそ清らかでいられるもの。まず体を動かして、小さなことから始めてみて。流れは必ず戻ってくるから。',
+  ],
 ];
 
 // MESSAGES[arcanaIndex][0=正位置 / 1=逆位置][elementIndex 0=木 1=火 2=土 3=金 4=水]
@@ -547,6 +731,44 @@ const MESSAGES = [
 
 let drawing = false;
 
+function initShuffleRing() {
+  const ring = document.getElementById('shuffle-ring');
+  ring.innerHTML = '';
+  ring.classList.remove('mixing');
+  void ring.offsetWidth; // アニメーションリセット用
+
+  const cx = 120, cy = 120; // 240x240の中心
+  const cardW = 44, cardH = 68;
+
+  // カードはやや密集させて配置（円軌道の動きで自然に広がる）
+  const layout = [
+    { ox:   0, oy:  -8, r: -18, dx: -18, dy:  12, spin:  22 },
+    { ox:  28, oy: -28, r:  24, dx:  14, dy: -10, spin: -20 },
+    { ox: -32, oy: -22, r: -28, dx: -14, dy:  14, spin:  26 },
+    { ox:  30, oy:  22, r:  20, dx:  18, dy:  10, spin: -18 },
+    { ox: -28, oy:  26, r: -22, dx: -12, dy: -12, spin:  24 },
+    { ox:  10, oy:  32, r:  30, dx:  10, dy:  18, spin: -24 },
+    { ox: -14, oy:   6, r: -12, dx: -20, dy:   8, spin:  18 },
+    { ox:  16, oy: -12, r:  14, dx:  12, dy: -16, spin: -26 },
+  ];
+
+  layout.forEach((p, i) => {
+    const x = cx + p.ox - cardW / 2;
+    const y = cy + p.oy - cardH / 2;
+
+    const card = document.createElement('div');
+    card.className = `shuffle-mini ${i % 2 === 0 ? 'arcana-mini' : 'element-mini'}`;
+    card.style.left = `${x}px`;
+    card.style.top  = `${y}px`;
+    card.style.setProperty('--r',    `${p.r}deg`);
+    card.style.setProperty('--dx',   `${p.dx}px`);
+    card.style.setProperty('--dy',   `${p.dy}px`);
+    card.style.setProperty('--spin', `${p.spin}deg`);
+    card.style.animationDelay = `${i * 0.08}s`;
+    ring.appendChild(card);
+  });
+}
+
 function drawCards() {
   if (drawing) return;
   drawing = true;
@@ -554,16 +776,18 @@ function drawCards() {
   const btn = document.getElementById('draw-button');
   btn.disabled = true;
 
-  const arcanaCard    = document.getElementById('arcana-card');
-  const arcanaFront   = document.getElementById('arcana-front');
-  const elementCard   = document.getElementById('element-card');
-  const messageArea   = document.getElementById('message-area');
+  const arcanaCard  = document.getElementById('arcana-card');
+  const arcanaFront = document.getElementById('arcana-front');
+  const elementCard = document.getElementById('element-card');
+  const messageArea = document.getElementById('message-area');
 
   // リセット
+  const adviceArea  = document.getElementById('advice-area');
   arcanaCard.classList.remove('flipped');
   elementCard.classList.remove('flipped');
   arcanaFront.classList.remove('reversed');
   messageArea.classList.remove('visible');
+  adviceArea.classList.remove('visible');
 
   // 抽選
   const ai       = Math.floor(Math.random() * 22);
@@ -589,21 +813,33 @@ function drawCards() {
 
   // メッセージ
   document.getElementById('message-text').textContent = MESSAGES[ai][ri][ei];
+  document.getElementById('advice-text').textContent  = ADVICE[ei][ri];
 
-  // アニメーション
+  // シャッフルアニメーション開始
+  initShuffleRing();
+  const overlay = document.getElementById('shuffle-overlay');
+  const ring    = document.getElementById('shuffle-ring');
+  overlay.classList.add('active');
+  setTimeout(() => ring.classList.add('mixing'), 50);
+
+  // シャッフル終了 → オーバーレイフェードアウト
+  setTimeout(() => overlay.classList.remove('active'), 2650);
+
+  // カードをめくる
   setTimeout(() => {
     arcanaCard.classList.add('flipped');
     if (reversed) arcanaFront.classList.add('reversed');
-  }, 300);
+  }, 3100);
 
-  setTimeout(() => elementCard.classList.add('flipped'), 850);
+  setTimeout(() => elementCard.classList.add('flipped'), 3650);
 
   setTimeout(() => {
     messageArea.classList.add('visible');
+    setTimeout(() => adviceArea.classList.add('visible'), 600);
     btn.disabled = false;
     btn.textContent = 'もう一度引く';
     drawing = false;
-  }, 1700);
+  }, 4500);
 }
 </script>
 </body>

@@ -331,6 +331,41 @@
       .advice-sun  { width: 54px; height: 54px; bottom: -22px; right: 12px; }
     }
 
+    /* ── LINE CTA ── */
+    .line-cta-block {
+      max-width: 340px;
+      width: 100%;
+      background: rgba(255,248,235,0.85);
+      border: 1px solid rgba(192,98,26,0.25);
+      border-radius: 10px;
+      padding: 1.2rem 1.4rem 1rem;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .line-cta-block.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .line-cta-desc {
+      font-size: 0.8rem;
+      line-height: 1.9;
+      color: #b08060;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.7rem;
+    }
+    .line-cta-link {
+      display: inline-block;
+      color: #c0621a;
+      font-size: 0.88rem;
+      font-weight: bold;
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      transition: color 0.2s;
+    }
+    .line-cta-link:hover { color: #8a3a10; }
+
     /* ── ボタン ── */
     .draw-button {
       padding: 0.85rem 3rem;
@@ -548,6 +583,11 @@
     <p class="advice-label">✦ ひのえの一言アドバイス ✦</p>
     <p class="advice-text" id="advice-text"></p>
     <img class="advice-sun" src="images/キャラ1.png" alt="ひのえ">
+  </div>
+
+  <div class="line-cta-block" id="line-cta">
+    <p class="line-cta-desc">日干特典PDF・四柱推命の豆知識など、<br>ひのえのLINEで受け取れます。</p>
+    <a href="https://lin.ee/9pyWqAU" class="line-cta-link">ひのえのLINEはこちら →</a>
   </div>
 
   <button class="draw-button" id="draw-button" onclick="drawCards()">カードを引く</button>
@@ -788,6 +828,7 @@ function drawCards() {
   arcanaFront.classList.remove('reversed');
   messageArea.classList.remove('visible');
   adviceArea.classList.remove('visible');
+  document.getElementById('line-cta').classList.remove('visible');
 
   // 抽選
   const ai       = Math.floor(Math.random() * 22);
@@ -836,6 +877,7 @@ function drawCards() {
   setTimeout(() => {
     messageArea.classList.add('visible');
     setTimeout(() => adviceArea.classList.add('visible'), 600);
+    setTimeout(() => document.getElementById('line-cta').classList.add('visible'), 1200);
     btn.disabled = false;
     btn.textContent = 'もう一度引く';
     drawing = false;

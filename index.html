@@ -4,6 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>タロット2枚引き</title>
+  <script>
+    (function(){
+      var KEY   = 'hinoe2024';
+      var STORE = 'tarot_access_v1';
+      var p = new URLSearchParams(location.search);
+      if (p.get('key') === KEY) {
+        localStorage.setItem(STORE, '1');
+        history.replaceState({}, '', location.pathname);
+      }
+      if (localStorage.getItem(STORE) !== '1') {
+        document.documentElement.classList.add('locked');
+      }
+    })();
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -435,11 +449,22 @@
 
     /* デスクトップ（1024px〜） */
     @media (min-width: 1024px) {
-      body { padding: 3rem 2rem; gap: 2rem; }
-      h1 { font-size: 2.2rem; }
-      .cards-area { gap: 2.5rem; }
-      .card-container { width: 180px; height: 280px; }
-      .message-area { max-width: 560px; }
+      body { padding: 0.7rem 2rem; gap: 0.65rem; justify-content: flex-start; min-height: 100vh; }
+      h1 { font-size: 1.9rem; }
+      .subtitle { margin-top: -0.5rem; }
+      .cards-area { gap: 2rem; }
+      .card-container { width: 140px; height: 210px; }
+      .arcana-name { font-size: 0.95rem; }
+      .element-kanji { font-size: 1.5rem; }
+      .message-area { max-width: 620px; padding: 0.65rem 1.8rem; min-height: 0; }
+      .message-text { font-size: 0.95rem; line-height: 1.75; }
+      .advice-area { max-width: 620px; padding: 0.65rem 1.8rem 0.65rem 1.4rem; }
+      .advice-label { font-size: 0.67rem; }
+      .advice-text { font-size: 0.9rem; line-height: 1.65; }
+      .advice-sun { width: 46px; height: 46px; bottom: -16px; }
+      .line-cta-block { max-width: 400px; padding: 0.65rem 1.2rem 0.55rem; }
+      .line-cta-desc { font-size: 0.78rem; line-height: 1.6; margin-bottom: 0.3rem; }
+      .draw-button { padding: 0.65rem 2.5rem; font-size: 0.92rem; }
     }
 
     /* ── シャッフルアニメーション ── */
@@ -524,9 +549,95 @@
       from { opacity: 0.35; }
       to   { opacity: 1; }
     }
+    /* ── アクセス制限 ── */
+    html.locked body > :not(#lock-screen) { display: none !important; }
+
+    #lock-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #fdf3e7;
+      background-image:
+        radial-gradient(ellipse at 30% 30%, rgba(255,200,120,0.45) 0%, transparent 60%),
+        radial-gradient(ellipse at 75% 70%, rgba(255,160,80,0.25) 0%, transparent 55%);
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 1.5rem;
+      font-family: 'Yu Mincho', 'YuMincho', 'Hiragino Mincho ProN', serif;
+    }
+    html.locked #lock-screen { display: flex; }
+
+    .lock-box {
+      text-align: center;
+      padding: 2.5rem 2rem 2rem;
+      background: rgba(255,248,235,0.95);
+      border: 1px solid rgba(192,98,26,0.3);
+      border-radius: 16px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 4px 32px rgba(192,98,26,0.1);
+    }
+    .lock-icon {
+      font-size: 2.2rem;
+      color: rgba(192,98,26,0.4);
+      margin-bottom: 1rem;
+    }
+    .lock-title {
+      font-size: 1.1rem;
+      letter-spacing: 0.3em;
+      color: #c0621a;
+      margin-bottom: 1.2rem;
+      font-weight: normal;
+    }
+    .lock-desc {
+      font-size: 0.9rem;
+      line-height: 1.9;
+      color: #5a3a1a;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.6rem;
+    }
+    .lock-sub {
+      font-size: 0.8rem;
+      color: #b08060;
+      letter-spacing: 0.1em;
+      margin-bottom: 1.6rem;
+      line-height: 1.7;
+    }
+    .lock-button {
+      display: inline-block;
+      padding: 0.85rem 2.2rem;
+      background: #c0621a;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      letter-spacing: 0.18em;
+      transition: background 0.25s, box-shadow 0.25s;
+      margin-bottom: 1rem;
+    }
+    .lock-button:hover { background: #a04a10; box-shadow: 0 4px 16px rgba(192,98,26,0.3); }
+    .lock-note {
+      font-size: 0.72rem;
+      color: #b08060;
+      letter-spacing: 0.1em;
+      line-height: 1.7;
+    }
   </style>
 </head>
 <body>
+
+  <!-- ロック画面 -->
+  <div id="lock-screen">
+    <div class="lock-box">
+      <div class="lock-icon">✦</div>
+      <h2 class="lock-title">電子書籍ご購入者様専用</h2>
+      <p class="lock-desc">このタロット占いアプリは、<br>電子書籍をご購入いただいた方限定です。</p>
+      <p class="lock-sub">書籍の巻末に記載のフォームにご登録いただくと、<br>アクセス用URLが表示されます。</p>
+      <a href="https://forms.gle/obfPPHrt8Y31aiho9" class="lock-button" target="_blank">フォームに回答する →</a>
+      <p class="lock-note">登録完了後に表示されるURLをお気に入りに保存すると、<br>以降はいつでもご利用いただけます。</p>
+    </div>
+  </div>
 
   <h1>✦ タロット占い ✦</h1>
   <p class="subtitle">大アルカナ × 五行カード</p>
